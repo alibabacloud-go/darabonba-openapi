@@ -3,7 +3,7 @@ module github.com/alibabacloud-go/darabonba-openapi
 go 1.14
 
 require (
-	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.3-0.20220307032336-5c73e99b9755
+	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.3
 	github.com/alibabacloud-go/openapi-util v0.0.10
 	github.com/alibabacloud-go/tea v1.1.17
 	github.com/alibabacloud-go/tea-utils v1.4.3

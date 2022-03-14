@@ -1,5 +1,5 @@
-github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.3-0.20220307032336-5c73e99b9755 h1:2AnN/KDQwdHhXwhEeGXQ/hdAFZveZLTaEX4kyaxmzko=
-github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.3-0.20220307032336-5c73e99b9755/go.mod h1:sCavSAvdzOjul4cEqeVtvlSaSScfNsTQ+46HwlTL1hc=
+github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.3 h1:/tDcbwYG43uhMRPoN3jUTbcO62iM+0WQ3zqXQQZnrws=
+github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.3/go.mod h1:sCavSAvdzOjul4cEqeVtvlSaSScfNsTQ+46HwlTL1hc=
 github.com/alibabacloud-go/debug v0.0.0-20190504072949-9472017b5c68 h1:NqugFkGxx1TXSh/pBcU00Y6bljgDPaFdh5MUSeJ7e50=
 github.com/alibabacloud-go/debug v0.0.0-20190504072949-9472017b5c68/go.mod h1:6pb/Qy8c+lqua8cFpEy7g39NRRqOWc3rOwAy8m5Y2BY=
 github.com/alibabacloud-go/openapi-util v0.0.10 h1:wzTQc6ZSHhCI1FybUITHE26451zLgQAmYdTaMOUmoqE=
