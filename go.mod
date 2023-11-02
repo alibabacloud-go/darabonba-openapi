@@ -6,7 +6,7 @@ require (
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.4
 	github.com/alibabacloud-go/openapi-util v0.1.0
 	github.com/alibabacloud-go/tea v1.1.20
-	github.com/alibabacloud-go/tea-utils/v2 v2.0.1
+	github.com/alibabacloud-go/tea-utils/v2 v2.0.5-0.20231102100808-2eb978fef55c
 	github.com/alibabacloud-go/tea-xml v1.1.2
 	github.com/aliyun/credentials-go v1.2.6
 	github.com/clbanning/mxj/v2 v2.5.5 // indirect

@@ -1283,6 +1283,15 @@ func (client *Client) DoRequest(params *Params, request *OpenApiRequest, runtime
 
 			}
 
+			extendsHeaders := make(map[string]*string)
+			if !tea.BoolValue(util.IsUnset(runtime.ExtendsParameters)) {
+				extendsParameters := runtime.ExtendsParameters
+				if !tea.BoolValue(util.IsUnset(extendsParameters.Headers)) {
+					extendsHeaders = extendsParameters.Headers
+				}
+
+			}
+
 			request_.Query = tea.Merge(globalQueries,
 				request.Query)
 			// endpoint is setted in product client
@@ -1295,6 +1304,7 @@ func (client *Client) DoRequest(params *Params, request *OpenApiRequest, runtime
 				"x-acs-signature-nonce": util.GetNonce(),
 				"accept":                tea.String("application/json"),
 			}, globalHeaders,
+				extendsHeaders,
 				request.Headers)
 			if tea.BoolValue(util.EqualString(params.Style, tea.String("RPC"))) {
 				headers, _err := client.GetRpcHeaders()
@@ -1345,34 +1355,19 @@ func (client *Client) DoRequest(params *Params, request *OpenApiRequest, runtime
 
 			request_.Headers["x-acs-content-sha256"] = hashedRequestPayload
 			if !tea.BoolValue(util.EqualString(params.AuthType, tea.String("Anonymous"))) {
-				authType, _err := client.GetType()
+				credentialModel, _err := client.Credential.GetCredential()
 				if _err != nil {
 					return _result, _err
 				}
 
+				authType := credentialModel.Type
 				if tea.BoolValue(util.EqualString(authType, tea.String("bearer"))) {
-					bearerToken, _err := client.GetBearerToken()
-					if _err != nil {
-						return _result, _err
-					}
-
+					bearerToken := credentialModel.BearerToken
 					request_.Headers["x-acs-bearer-token"] = bearerToken
 				} else {
-					accessKeyId, _err := client.GetAccessKeyId()
-					if _err != nil {
-						return _result, _err
-					}
-
-					accessKeySecret, _err := client.GetAccessKeySecret()
-					if _err != nil {
-						return _result, _err
-					}
-
-					securityToken, _err := client.GetSecurityToken()
-					if _err != nil {
-						return _result, _err
-					}
-
+					accessKeyId := credentialModel.AccessKeyId
+					accessKeySecret := credentialModel.AccessKeySecret
+					securityToken := credentialModel.SecurityToken
 					if !tea.BoolValue(util.Empty(securityToken)) {
 						request_.Headers["x-acs-accesskey-id"] = accessKeyId
 						request_.Headers["x-acs-security-token"] = securityToken
