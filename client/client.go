@@ -5,13 +5,14 @@
 package client
 
 import (
+	"io"
+
 	spi "github.com/alibabacloud-go/alibabacloud-gateway-spi/client"
 	openapiutil "github.com/alibabacloud-go/openapi-util/service"
 	util "github.com/alibabacloud-go/tea-utils/v2/service"
 	xml "github.com/alibabacloud-go/tea-xml/service"
 	"github.com/alibabacloud-go/tea/tea"
 	credential "github.com/aliyun/credentials-go/credentials"
-	"io"
 )
 
 type GlobalParameters struct {
@@ -57,6 +58,8 @@ type Config struct {
 	ReadTimeout *int `json:"readTimeout,omitempty" xml:"readTimeout,omitempty"`
 	// connect timeout
 	ConnectTimeout *int `json:"connectTimeout,omitempty" xml:"connectTimeout,omitempty"`
+	// idle connection timeout
+	IdleConnTimeout *int `json:"idleConnTimeout,omitempty" xml:"idleConnTimeout,omitempty"`
 	// http proxy
 	HttpProxy *string `json:"httpProxy,omitempty" xml:"httpProxy,omitempty"`
 	// https proxy
@@ -145,6 +148,11 @@ func (s *Config) SetReadTimeout(v int) *Config {
 
 func (s *Config) SetConnectTimeout(v int) *Config {
 	s.ConnectTimeout = &v
+	return s
+}
+
+func (s *Config) SetIdleConnTimeout(v int) *Config {
+	s.IdleConnTimeout = &v
 	return s
 }
 
@@ -371,6 +379,7 @@ type Client struct {
 	Suffix               *string
 	ReadTimeout          *int
 	ConnectTimeout       *int
+	IdleConnTimeout      *int
 	HttpProxy            *string
 	HttpsProxy           *string
 	Socks5Proxy          *string
@@ -443,6 +452,7 @@ func (client *Client) Init(config *Config) (_err error) {
 	client.UserAgent = config.UserAgent
 	client.ReadTimeout = config.ReadTimeout
 	client.ConnectTimeout = config.ConnectTimeout
+	client.IdleConnTimeout = config.IdleConnTimeout
 	client.HttpProxy = config.HttpProxy
 	client.HttpsProxy = config.HttpsProxy
 	client.NoProxy = config.NoProxy
@@ -480,18 +490,19 @@ func (client *Client) DoRPCRequest(action *string, version *string, protocol *st
 		return _result, _err
 	}
 	_runtime := map[string]interface{}{
-		"timeouted":      "retry",
-		"key":            tea.StringValue(util.DefaultString(runtime.Key, client.Key)),
-		"cert":           tea.StringValue(util.DefaultString(runtime.Cert, client.Cert)),
-		"ca":             tea.StringValue(util.DefaultString(runtime.Ca, client.Ca)),
-		"readTimeout":    tea.IntValue(util.DefaultNumber(runtime.ReadTimeout, client.ReadTimeout)),
-		"connectTimeout": tea.IntValue(util.DefaultNumber(runtime.ConnectTimeout, client.ConnectTimeout)),
-		"httpProxy":      tea.StringValue(util.DefaultString(runtime.HttpProxy, client.HttpProxy)),
-		"httpsProxy":     tea.StringValue(util.DefaultString(runtime.HttpsProxy, client.HttpsProxy)),
-		"noProxy":        tea.StringValue(util.DefaultString(runtime.NoProxy, client.NoProxy)),
-		"socks5Proxy":    tea.StringValue(util.DefaultString(runtime.Socks5Proxy, client.Socks5Proxy)),
-		"socks5NetWork":  tea.StringValue(util.DefaultString(runtime.Socks5NetWork, client.Socks5NetWork)),
-		"maxIdleConns":   tea.IntValue(util.DefaultNumber(runtime.MaxIdleConns, client.MaxIdleConns)),
+		"timeouted":       "retry",
+		"key":             tea.StringValue(util.DefaultString(runtime.Key, client.Key)),
+		"cert":            tea.StringValue(util.DefaultString(runtime.Cert, client.Cert)),
+		"ca":              tea.StringValue(util.DefaultString(runtime.Ca, client.Ca)),
+		"readTimeout":     tea.IntValue(util.DefaultNumber(runtime.ReadTimeout, client.ReadTimeout)),
+		"connectTimeout":  tea.IntValue(util.DefaultNumber(runtime.ConnectTimeout, client.ConnectTimeout)),
+		"idleConnTimeout": tea.IntValue(util.DefaultNumber(runtime.IdleConnTimeout, client.IdleConnTimeout)),
+		"httpProxy":       tea.StringValue(util.DefaultString(runtime.HttpProxy, client.HttpProxy)),
+		"httpsProxy":      tea.StringValue(util.DefaultString(runtime.HttpsProxy, client.HttpsProxy)),
+		"noProxy":         tea.StringValue(util.DefaultString(runtime.NoProxy, client.NoProxy)),
+		"socks5Proxy":     tea.StringValue(util.DefaultString(runtime.Socks5Proxy, client.Socks5Proxy)),
+		"socks5NetWork":   tea.StringValue(util.DefaultString(runtime.Socks5NetWork, client.Socks5NetWork)),
+		"maxIdleConns":    tea.IntValue(util.DefaultNumber(runtime.MaxIdleConns, client.MaxIdleConns)),
 		"retry": map[string]interface{}{
 			"retryable":   tea.BoolValue(runtime.Autoretry),
 			"maxAttempts": tea.IntValue(util.DefaultNumber(runtime.MaxAttempts, tea.Int(3))),
@@ -743,18 +754,19 @@ func (client *Client) DoROARequest(action *string, version *string, protocol *st
 		return _result, _err
 	}
 	_runtime := map[string]interface{}{
-		"timeouted":      "retry",
-		"key":            tea.StringValue(util.DefaultString(runtime.Key, client.Key)),
-		"cert":           tea.StringValue(util.DefaultString(runtime.Cert, client.Cert)),
-		"ca":             tea.StringValue(util.DefaultString(runtime.Ca, client.Ca)),
-		"readTimeout":    tea.IntValue(util.DefaultNumber(runtime.ReadTimeout, client.ReadTimeout)),
-		"connectTimeout": tea.IntValue(util.DefaultNumber(runtime.ConnectTimeout, client.ConnectTimeout)),
-		"httpProxy":      tea.StringValue(util.DefaultString(runtime.HttpProxy, client.HttpProxy)),
-		"httpsProxy":     tea.StringValue(util.DefaultString(runtime.HttpsProxy, client.HttpsProxy)),
-		"noProxy":        tea.StringValue(util.DefaultString(runtime.NoProxy, client.NoProxy)),
-		"socks5Proxy":    tea.StringValue(util.DefaultString(runtime.Socks5Proxy, client.Socks5Proxy)),
-		"socks5NetWork":  tea.StringValue(util.DefaultString(runtime.Socks5NetWork, client.Socks5NetWork)),
-		"maxIdleConns":   tea.IntValue(util.DefaultNumber(runtime.MaxIdleConns, client.MaxIdleConns)),
+		"timeouted":       "retry",
+		"key":             tea.StringValue(util.DefaultString(runtime.Key, client.Key)),
+		"cert":            tea.StringValue(util.DefaultString(runtime.Cert, client.Cert)),
+		"ca":              tea.StringValue(util.DefaultString(runtime.Ca, client.Ca)),
+		"readTimeout":     tea.IntValue(util.DefaultNumber(runtime.ReadTimeout, client.ReadTimeout)),
+		"connectTimeout":  tea.IntValue(util.DefaultNumber(runtime.ConnectTimeout, client.ConnectTimeout)),
+		"idleConnTimeout": tea.IntValue(util.DefaultNumber(runtime.IdleConnTimeout, client.IdleConnTimeout)),
+		"httpProxy":       tea.StringValue(util.DefaultString(runtime.HttpProxy, client.HttpProxy)),
+		"httpsProxy":      tea.StringValue(util.DefaultString(runtime.HttpsProxy, client.HttpsProxy)),
+		"noProxy":         tea.StringValue(util.DefaultString(runtime.NoProxy, client.NoProxy)),
+		"socks5Proxy":     tea.StringValue(util.DefaultString(runtime.Socks5Proxy, client.Socks5Proxy)),
+		"socks5NetWork":   tea.StringValue(util.DefaultString(runtime.Socks5NetWork, client.Socks5NetWork)),
+		"maxIdleConns":    tea.IntValue(util.DefaultNumber(runtime.MaxIdleConns, client.MaxIdleConns)),
 		"retry": map[string]interface{}{
 			"retryable":   tea.BoolValue(runtime.Autoretry),
 			"maxAttempts": tea.IntValue(util.DefaultNumber(runtime.MaxAttempts, tea.Int(3))),
@@ -984,18 +996,19 @@ func (client *Client) DoROARequestWithForm(action *string, version *string, prot
 		return _result, _err
 	}
 	_runtime := map[string]interface{}{
-		"timeouted":      "retry",
-		"key":            tea.StringValue(util.DefaultString(runtime.Key, client.Key)),
-		"cert":           tea.StringValue(util.DefaultString(runtime.Cert, client.Cert)),
-		"ca":             tea.StringValue(util.DefaultString(runtime.Ca, client.Ca)),
-		"readTimeout":    tea.IntValue(util.DefaultNumber(runtime.ReadTimeout, client.ReadTimeout)),
-		"connectTimeout": tea.IntValue(util.DefaultNumber(runtime.ConnectTimeout, client.ConnectTimeout)),
-		"httpProxy":      tea.StringValue(util.DefaultString(runtime.HttpProxy, client.HttpProxy)),
-		"httpsProxy":     tea.StringValue(util.DefaultString(runtime.HttpsProxy, client.HttpsProxy)),
-		"noProxy":        tea.StringValue(util.DefaultString(runtime.NoProxy, client.NoProxy)),
-		"socks5Proxy":    tea.StringValue(util.DefaultString(runtime.Socks5Proxy, client.Socks5Proxy)),
-		"socks5NetWork":  tea.StringValue(util.DefaultString(runtime.Socks5NetWork, client.Socks5NetWork)),
-		"maxIdleConns":   tea.IntValue(util.DefaultNumber(runtime.MaxIdleConns, client.MaxIdleConns)),
+		"timeouted":       "retry",
+		"key":             tea.StringValue(util.DefaultString(runtime.Key, client.Key)),
+		"cert":            tea.StringValue(util.DefaultString(runtime.Cert, client.Cert)),
+		"ca":              tea.StringValue(util.DefaultString(runtime.Ca, client.Ca)),
+		"readTimeout":     tea.IntValue(util.DefaultNumber(runtime.ReadTimeout, client.ReadTimeout)),
+		"connectTimeout":  tea.IntValue(util.DefaultNumber(runtime.ConnectTimeout, client.ConnectTimeout)),
+		"idleConnTimeout": tea.IntValue(util.DefaultNumber(runtime.IdleConnTimeout, client.IdleConnTimeout)),
+		"httpProxy":       tea.StringValue(util.DefaultString(runtime.HttpProxy, client.HttpProxy)),
+		"httpsProxy":      tea.StringValue(util.DefaultString(runtime.HttpsProxy, client.HttpsProxy)),
+		"noProxy":         tea.StringValue(util.DefaultString(runtime.NoProxy, client.NoProxy)),
+		"socks5Proxy":     tea.StringValue(util.DefaultString(runtime.Socks5Proxy, client.Socks5Proxy)),
+		"socks5NetWork":   tea.StringValue(util.DefaultString(runtime.Socks5NetWork, client.Socks5NetWork)),
+		"maxIdleConns":    tea.IntValue(util.DefaultNumber(runtime.MaxIdleConns, client.MaxIdleConns)),
 		"retry": map[string]interface{}{
 			"retryable":   tea.BoolValue(runtime.Autoretry),
 			"maxAttempts": tea.IntValue(util.DefaultNumber(runtime.MaxAttempts, tea.Int(3))),
@@ -1231,18 +1244,19 @@ func (client *Client) DoRequest(params *Params, request *OpenApiRequest, runtime
 		return _result, _err
 	}
 	_runtime := map[string]interface{}{
-		"timeouted":      "retry",
-		"key":            tea.StringValue(util.DefaultString(runtime.Key, client.Key)),
-		"cert":           tea.StringValue(util.DefaultString(runtime.Cert, client.Cert)),
-		"ca":             tea.StringValue(util.DefaultString(runtime.Ca, client.Ca)),
-		"readTimeout":    tea.IntValue(util.DefaultNumber(runtime.ReadTimeout, client.ReadTimeout)),
-		"connectTimeout": tea.IntValue(util.DefaultNumber(runtime.ConnectTimeout, client.ConnectTimeout)),
-		"httpProxy":      tea.StringValue(util.DefaultString(runtime.HttpProxy, client.HttpProxy)),
-		"httpsProxy":     tea.StringValue(util.DefaultString(runtime.HttpsProxy, client.HttpsProxy)),
-		"noProxy":        tea.StringValue(util.DefaultString(runtime.NoProxy, client.NoProxy)),
-		"socks5Proxy":    tea.StringValue(util.DefaultString(runtime.Socks5Proxy, client.Socks5Proxy)),
-		"socks5NetWork":  tea.StringValue(util.DefaultString(runtime.Socks5NetWork, client.Socks5NetWork)),
-		"maxIdleConns":   tea.IntValue(util.DefaultNumber(runtime.MaxIdleConns, client.MaxIdleConns)),
+		"timeouted":       "retry",
+		"key":             tea.StringValue(util.DefaultString(runtime.Key, client.Key)),
+		"cert":            tea.StringValue(util.DefaultString(runtime.Cert, client.Cert)),
+		"ca":              tea.StringValue(util.DefaultString(runtime.Ca, client.Ca)),
+		"readTimeout":     tea.IntValue(util.DefaultNumber(runtime.ReadTimeout, client.ReadTimeout)),
+		"connectTimeout":  tea.IntValue(util.DefaultNumber(runtime.ConnectTimeout, client.ConnectTimeout)),
+		"idleConnTimeout": tea.IntValue(util.DefaultNumber(runtime.IdleConnTimeout, client.IdleConnTimeout)),
+		"httpProxy":       tea.StringValue(util.DefaultString(runtime.HttpProxy, client.HttpProxy)),
+		"httpsProxy":      tea.StringValue(util.DefaultString(runtime.HttpsProxy, client.HttpsProxy)),
+		"noProxy":         tea.StringValue(util.DefaultString(runtime.NoProxy, client.NoProxy)),
+		"socks5Proxy":     tea.StringValue(util.DefaultString(runtime.Socks5Proxy, client.Socks5Proxy)),
+		"socks5NetWork":   tea.StringValue(util.DefaultString(runtime.Socks5NetWork, client.Socks5NetWork)),
+		"maxIdleConns":    tea.IntValue(util.DefaultNumber(runtime.MaxIdleConns, client.MaxIdleConns)),
 		"retry": map[string]interface{}{
 			"retryable":   tea.BoolValue(runtime.Autoretry),
 			"maxAttempts": tea.IntValue(util.DefaultNumber(runtime.MaxAttempts, tea.Int(3))),
@@ -1542,18 +1556,19 @@ func (client *Client) Execute(params *Params, request *OpenApiRequest, runtime *
 		return _result, _err
 	}
 	_runtime := map[string]interface{}{
-		"timeouted":      "retry",
-		"key":            tea.StringValue(util.DefaultString(runtime.Key, client.Key)),
-		"cert":           tea.StringValue(util.DefaultString(runtime.Cert, client.Cert)),
-		"ca":             tea.StringValue(util.DefaultString(runtime.Ca, client.Ca)),
-		"readTimeout":    tea.IntValue(util.DefaultNumber(runtime.ReadTimeout, client.ReadTimeout)),
-		"connectTimeout": tea.IntValue(util.DefaultNumber(runtime.ConnectTimeout, client.ConnectTimeout)),
-		"httpProxy":      tea.StringValue(util.DefaultString(runtime.HttpProxy, client.HttpProxy)),
-		"httpsProxy":     tea.StringValue(util.DefaultString(runtime.HttpsProxy, client.HttpsProxy)),
-		"noProxy":        tea.StringValue(util.DefaultString(runtime.NoProxy, client.NoProxy)),
-		"socks5Proxy":    tea.StringValue(util.DefaultString(runtime.Socks5Proxy, client.Socks5Proxy)),
-		"socks5NetWork":  tea.StringValue(util.DefaultString(runtime.Socks5NetWork, client.Socks5NetWork)),
-		"maxIdleConns":   tea.IntValue(util.DefaultNumber(runtime.MaxIdleConns, client.MaxIdleConns)),
+		"timeouted":       "retry",
+		"key":             tea.StringValue(util.DefaultString(runtime.Key, client.Key)),
+		"cert":            tea.StringValue(util.DefaultString(runtime.Cert, client.Cert)),
+		"ca":              tea.StringValue(util.DefaultString(runtime.Ca, client.Ca)),
+		"readTimeout":     tea.IntValue(util.DefaultNumber(runtime.ReadTimeout, client.ReadTimeout)),
+		"connectTimeout":  tea.IntValue(util.DefaultNumber(runtime.ConnectTimeout, client.ConnectTimeout)),
+		"idleConnTimeout": tea.IntValue(util.DefaultNumber(runtime.IdleConnTimeout, client.IdleConnTimeout)),
+		"httpProxy":       tea.StringValue(util.DefaultString(runtime.HttpProxy, client.HttpProxy)),
+		"httpsProxy":      tea.StringValue(util.DefaultString(runtime.HttpsProxy, client.HttpsProxy)),
+		"noProxy":         tea.StringValue(util.DefaultString(runtime.NoProxy, client.NoProxy)),
+		"socks5Proxy":     tea.StringValue(util.DefaultString(runtime.Socks5Proxy, client.Socks5Proxy)),
+		"socks5NetWork":   tea.StringValue(util.DefaultString(runtime.Socks5NetWork, client.Socks5NetWork)),
+		"maxIdleConns":    tea.IntValue(util.DefaultNumber(runtime.MaxIdleConns, client.MaxIdleConns)),
 		"retry": map[string]interface{}{
 			"retryable":   tea.BoolValue(runtime.Autoretry),
 			"maxAttempts": tea.IntValue(util.DefaultNumber(runtime.MaxAttempts, tea.Int(3))),
