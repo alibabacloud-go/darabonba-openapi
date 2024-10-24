@@ -1591,9 +1591,17 @@ func (client *Client) DoRequest(params *Params, request *OpenApiRequest, runtime
 
 			request_.Headers["x-acs-content-sha256"] = hashedRequestPayload
 			if !tea.BoolValue(util.EqualString(params.AuthType, tea.String("Anonymous"))) {
-				credentialModel, _err := client.Credential.GetCredential()
-				if _err != nil {
-					return _result, _err
+				var (
+					credentialModel *credential.CredentialModel
+					_err            error
+				)
+				if tea.BoolValue(util.IsUnset(client.Credential)) {
+					credentialModel = &credential.CredentialModel{}
+				} else {
+					credentialModel, _err = client.Credential.GetCredential()
+					if _err != nil {
+						return _result, _err
+					}
 				}
 
 				authType := credentialModel.Type
