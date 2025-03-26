@@ -8,6 +8,7 @@ import (
 	models "github.com/alibabacloud-go/darabonba-openapi/v2/models"
 	openapiutil "github.com/alibabacloud-go/darabonba-openapi/v2/utils"
 	"github.com/alibabacloud-go/tea/dara"
+	httpclient "github.com/alibabacloud-go/tea/dara"
 	credential "github.com/aliyun/credentials-go/credentials"
 )
 
@@ -79,6 +80,8 @@ func (s *SSEResponse) Validate() error {
 type iAlibabaCloudError interface {
 	Error() string
 	GetRetryAfter() *int64
+	GetData() map[string]interface{}
+	GetAccessDeniedDetail() map[string]interface{}
 	GetName() *string
 	GetStack() *string
 	GetStatusCode() *int
@@ -89,14 +92,16 @@ type iAlibabaCloudError interface {
 }
 
 type AlibabaCloudError struct {
-	RetryAfter  *int64  ``
-	Name        *string ``
-	Stack       *string ``
-	StatusCode  *int    ``
-	Code        *string ``
-	Message     *string ``
-	Description *string ``
-	RequestId   *string ``
+	RetryAfter         *int64                 ``
+	Data               map[string]interface{} ``
+	AccessDeniedDetail map[string]interface{} ``
+	Name               *string                ``
+	Stack              *string                ``
+	StatusCode         *int                   ``
+	Code               *string                ``
+	Message            *string                ``
+	Description        *string                ``
+	RequestId          *string                ``
 }
 
 func (err AlibabaCloudError) Error() string {
@@ -110,6 +115,14 @@ func (err AlibabaCloudError) Error() string {
 
 func (s *AlibabaCloudError) GetRetryAfter() *int64 {
 	return s.RetryAfter
+}
+
+func (s *AlibabaCloudError) GetData() map[string]interface{} {
+	return s.Data
+}
+
+func (s *AlibabaCloudError) GetAccessDeniedDetail() map[string]interface{} {
+	return s.AccessDeniedDetail
 }
 
 func (s *AlibabaCloudError) GetName() *string {
@@ -148,6 +161,7 @@ type iClientError interface {
 	GetDescription() *string
 	GetRequestId() *string
 	GetRetryAfter() *int64
+	GetData() map[string]interface{}
 	GetName() *string
 	GetStack() *string
 	GetAccessDeniedDetail() map[string]interface{}
@@ -160,6 +174,7 @@ type ClientError struct {
 	Description        *string                ``
 	RequestId          *string                ``
 	RetryAfter         *int64                 ``
+	Data               map[string]interface{} ``
 	Name               *string                ``
 	Stack              *string                ``
 	AccessDeniedDetail map[string]interface{} ``
@@ -198,6 +213,10 @@ func (s *ClientError) GetRetryAfter() *int64 {
 	return s.RetryAfter
 }
 
+func (s *ClientError) GetData() map[string]interface{} {
+	return s.Data
+}
+
 func (s *ClientError) GetName() *string {
 	return s.Name
 }
@@ -218,19 +237,23 @@ type iServerError interface {
 	GetDescription() *string
 	GetRequestId() *string
 	GetRetryAfter() *int64
+	GetData() map[string]interface{}
+	GetAccessDeniedDetail() map[string]interface{}
 	GetName() *string
 	GetStack() *string
 }
 
 type ServerError struct {
-	StatusCode  *int    ``
-	Code        *string ``
-	Message     *string ``
-	Description *string ``
-	RequestId   *string ``
-	RetryAfter  *int64  ``
-	Name        *string ``
-	Stack       *string ``
+	StatusCode         *int                   ``
+	Code               *string                ``
+	Message            *string                ``
+	Description        *string                ``
+	RequestId          *string                ``
+	RetryAfter         *int64                 ``
+	Data               map[string]interface{} ``
+	AccessDeniedDetail map[string]interface{} ``
+	Name               *string                ``
+	Stack              *string                ``
 }
 
 func (err ServerError) Error() string {
@@ -266,6 +289,14 @@ func (s *ServerError) GetRetryAfter() *int64 {
 	return s.RetryAfter
 }
 
+func (s *ServerError) GetData() map[string]interface{} {
+	return s.Data
+}
+
+func (s *ServerError) GetAccessDeniedDetail() map[string]interface{} {
+	return s.AccessDeniedDetail
+}
+
 func (s *ServerError) GetName() *string {
 	return s.Name
 }
@@ -281,20 +312,24 @@ type iThrottlingError interface {
 	GetMessage() *string
 	GetDescription() *string
 	GetRequestId() *string
+	GetData() map[string]interface{}
+	GetAccessDeniedDetail() map[string]interface{}
 	GetName() *string
 	GetStack() *string
 	GetRetryAfter() *int64
 }
 
 type ThrottlingError struct {
-	StatusCode  *int    ``
-	Code        *string ``
-	Message     *string ``
-	Description *string ``
-	RequestId   *string ``
-	Name        *string ``
-	Stack       *string ``
-	RetryAfter  *int64  ``
+	StatusCode         *int                   ``
+	Code               *string                ``
+	Message            *string                ``
+	Description        *string                ``
+	RequestId          *string                ``
+	Data               map[string]interface{} ``
+	AccessDeniedDetail map[string]interface{} ``
+	Name               *string                ``
+	Stack              *string                ``
+	RetryAfter         *int64                 ``
 }
 
 func (err ThrottlingError) Error() string {
@@ -324,6 +359,14 @@ func (s *ThrottlingError) GetDescription() *string {
 
 func (s *ThrottlingError) GetRequestId() *string {
 	return s.RequestId
+}
+
+func (s *ThrottlingError) GetData() map[string]interface{} {
+	return s.Data
+}
+
+func (s *ThrottlingError) GetAccessDeniedDetail() map[string]interface{} {
+	return s.AccessDeniedDetail
 }
 
 func (s *ThrottlingError) GetName() *string {
@@ -371,11 +414,12 @@ type Client struct {
 	Ca                   *string
 	DisableHttp2         *bool
 	RetryOptions         *dara.RetryOptions
+	HttpClient           httpclient.HttpClient
 }
 
 // Description:
 //
-// Init client with Config
+// # Init client with Config
 //
 // @param config - config contains the necessary information to create a client
 func NewClient(config *openapiutil.Config) (*Client, error) {
@@ -449,12 +493,13 @@ func (client *Client) Init(config *openapiutil.Config) (_err error) {
 	client.Ca = config.Ca
 	client.DisableHttp2 = config.DisableHttp2
 	client.RetryOptions = config.RetryOptions
+	client.HttpClient = config.HttpClient
 	return nil
 }
 
 // Description:
 //
-// Encapsulate the request and invoke the network
+// # Encapsulate the request and invoke the network
 //
 // @param action - api name
 //
@@ -488,6 +533,7 @@ func (client *Client) DoRPCRequest(action *string, version *string, protocol *st
 		"maxIdleConns":   dara.ForceInt(dara.Default(dara.IntValue(runtime.MaxIdleConns), dara.IntValue(client.MaxIdleConns))),
 		"retryOptions":   client.RetryOptions,
 		"ignoreSSL":      dara.BoolValue(runtime.IgnoreSSL),
+		"httpClient":     client.HttpClient,
 	})
 
 	var retryPolicyContext *dara.RetryPolicyContext
@@ -675,7 +721,7 @@ func (client *Client) DoRPCRequest(action *string, version *string, protocol *st
 
 // Description:
 //
-// Encapsulate the request and invoke the network
+// # Encapsulate the request and invoke the network
 //
 // @param action - api name
 //
@@ -711,6 +757,7 @@ func (client *Client) DoROARequest(action *string, version *string, protocol *st
 		"maxIdleConns":   dara.ForceInt(dara.Default(dara.IntValue(runtime.MaxIdleConns), dara.IntValue(client.MaxIdleConns))),
 		"retryOptions":   client.RetryOptions,
 		"ignoreSSL":      dara.BoolValue(runtime.IgnoreSSL),
+		"httpClient":     client.HttpClient,
 	})
 
 	var retryPolicyContext *dara.RetryPolicyContext
@@ -866,7 +913,7 @@ func (client *Client) DoROARequest(action *string, version *string, protocol *st
 
 // Description:
 //
-// Encapsulate the request and invoke the network with form body
+// # Encapsulate the request and invoke the network with form body
 //
 // @param action - api name
 //
@@ -902,6 +949,7 @@ func (client *Client) DoROARequestWithForm(action *string, version *string, prot
 		"maxIdleConns":   dara.ForceInt(dara.Default(dara.IntValue(runtime.MaxIdleConns), dara.IntValue(client.MaxIdleConns))),
 		"retryOptions":   client.RetryOptions,
 		"ignoreSSL":      dara.BoolValue(runtime.IgnoreSSL),
+		"httpClient":     client.HttpClient,
 	})
 
 	var retryPolicyContext *dara.RetryPolicyContext
@@ -1058,7 +1106,7 @@ func (client *Client) DoROARequestWithForm(action *string, version *string, prot
 
 // Description:
 //
-// Encapsulate the request and invoke the network
+// # Encapsulate the request and invoke the network
 //
 // @param action - api name
 //
@@ -1092,6 +1140,7 @@ func (client *Client) DoRequest(params *openapiutil.Params, request *openapiutil
 		"maxIdleConns":   dara.ForceInt(dara.Default(dara.IntValue(runtime.MaxIdleConns), dara.IntValue(client.MaxIdleConns))),
 		"retryOptions":   client.RetryOptions,
 		"ignoreSSL":      dara.BoolValue(runtime.IgnoreSSL),
+		"httpClient":     client.HttpClient,
 	})
 
 	var retryPolicyContext *dara.RetryPolicyContext
@@ -1305,7 +1354,7 @@ func (client *Client) DoRequest(params *openapiutil.Params, request *openapiutil
 
 // Description:
 //
-// Encapsulate the request and invoke the network
+// # Encapsulate the request and invoke the network
 //
 // @param action - api name
 //
@@ -1340,6 +1389,7 @@ func (client *Client) Execute(params *openapiutil.Params, request *openapiutil.O
 		"retryOptions":   client.RetryOptions,
 		"ignoreSSL":      dara.BoolValue(runtime.IgnoreSSL),
 		"disableHttp2":   dara.ForceBoolean(dara.Default(dara.BoolValue(client.DisableHttp2), false)),
+		"httpClient":     client.HttpClient,
 	})
 
 	var retryPolicyContext *dara.RetryPolicyContext
@@ -1538,6 +1588,7 @@ func (client *Client) CallSSEApi(params *openapiutil.Params, request *openapiuti
 		"maxIdleConns":   dara.ForceInt(dara.Default(dara.IntValue(runtime.MaxIdleConns), dara.IntValue(client.MaxIdleConns))),
 		"retryOptions":   client.RetryOptions,
 		"ignoreSSL":      dara.BoolValue(runtime.IgnoreSSL),
+		"httpClient":     client.HttpClient,
 	})
 
 	var retryPolicyContext *dara.RetryPolicyContext
@@ -1773,7 +1824,7 @@ func (client *Client) CallApi(params *openapiutil.Params, request *openapiutil.O
 
 // Description:
 //
-// Get accesskey id by using credential
+// # Get accesskey id by using credential
 //
 // @return accesskey id
 func (client *Client) GetAccessKeyId() (_result *string, _err error) {
@@ -1794,7 +1845,7 @@ func (client *Client) GetAccessKeyId() (_result *string, _err error) {
 
 // Description:
 //
-// Get accesskey secret by using credential
+// # Get accesskey secret by using credential
 //
 // @return accesskey secret
 func (client *Client) GetAccessKeySecret() (_result *string, _err error) {
@@ -1815,7 +1866,7 @@ func (client *Client) GetAccessKeySecret() (_result *string, _err error) {
 
 // Description:
 //
-// Get security token by using credential
+// # Get security token by using credential
 //
 // @return security token
 func (client *Client) GetSecurityToken() (_result *string, _err error) {
@@ -1836,7 +1887,7 @@ func (client *Client) GetSecurityToken() (_result *string, _err error) {
 
 // Description:
 //
-// Get bearer token by credential
+// # Get bearer token by credential
 //
 // @return bearer token
 func (client *Client) GetBearerToken() (_result *string, _err error) {
@@ -1852,7 +1903,7 @@ func (client *Client) GetBearerToken() (_result *string, _err error) {
 
 // Description:
 //
-// Get credential type by credential
+// # Get credential type by credential
 //
 // @return credential type e.g. access_key
 func (client *Client) GetType() (_result *string, _err error) {
@@ -1868,7 +1919,7 @@ func (client *Client) GetType() (_result *string, _err error) {
 
 // Description:
 //
-// If the endpointRule and config.endpoint are empty, throw error
+// # If the endpointRule and config.endpoint are empty, throw error
 //
 // @param config - config contains the necessary information to create a client
 func (client *Client) CheckConfig(config *openapiutil.Config) (_err error) {
@@ -1944,6 +1995,7 @@ func doRPCRequest_opResponse(response_ *dara.Response, client *Client, bodyType 
 				Message:     dara.String("code: " + dara.ToString(dara.IntValue(response_.StatusCode)) + ", " + dara.ToString(dara.Default(err["Message"], err["message"])) + " request id: " + dara.ToString(requestId)),
 				Description: dara.String(dara.ToString(dara.Default(err["Description"], err["description"]))),
 				RetryAfter:  openapiutil.GetThrottlingTimeLeft(response_.Headers),
+				Data:        err,
 				RequestId:   dara.String(dara.ToString(requestId)),
 			}
 			return _result, _err
@@ -1953,6 +2005,7 @@ func doRPCRequest_opResponse(response_ *dara.Response, client *Client, bodyType 
 				Code:               dara.String(dara.ToString(code)),
 				Message:            dara.String("code: " + dara.ToString(dara.IntValue(response_.StatusCode)) + ", " + dara.ToString(dara.Default(err["Message"], err["message"])) + " request id: " + dara.ToString(requestId)),
 				Description:        dara.String(dara.ToString(dara.Default(err["Description"], err["description"]))),
+				Data:               err,
 				AccessDeniedDetail: client.GetAccessDeniedDetail(err),
 				RequestId:          dara.String(dara.ToString(requestId)),
 			}
@@ -1963,6 +2016,7 @@ func doRPCRequest_opResponse(response_ *dara.Response, client *Client, bodyType 
 				Code:        dara.String(dara.ToString(code)),
 				Message:     dara.String("code: " + dara.ToString(dara.IntValue(response_.StatusCode)) + ", " + dara.ToString(dara.Default(err["Message"], err["message"])) + " request id: " + dara.ToString(requestId)),
 				Description: dara.String(dara.ToString(dara.Default(err["Description"], err["description"]))),
+				Data:        err,
 				RequestId:   dara.String(dara.ToString(requestId)),
 			}
 			return _result, _err
@@ -1992,13 +2046,13 @@ func doRPCRequest_opResponse(response_ *dara.Response, client *Client, bodyType 
 
 		return _result, _err
 	} else if dara.StringValue(bodyType) == "string" {
-		str, _err := dara.ReadAsString(response_.Body)
+		_str, _err := dara.ReadAsString(response_.Body)
 		if _err != nil {
 			return _result, _err
 		}
 
 		_err = dara.Convert(map[string]interface{}{
-			"body":       str,
+			"body":       _str,
 			"headers":    response_.Headers,
 			"statusCode": dara.IntValue(response_.StatusCode),
 		}, &_result)
@@ -2068,6 +2122,7 @@ func doROARequest_opResponse(response_ *dara.Response, client *Client, bodyType 
 				Message:     dara.String("code: " + dara.ToString(dara.IntValue(response_.StatusCode)) + ", " + dara.ToString(dara.Default(err["Message"], err["message"])) + " request id: " + requestId),
 				Description: dara.String(dara.ToString(dara.Default(err["Description"], err["description"]))),
 				RetryAfter:  openapiutil.GetThrottlingTimeLeft(response_.Headers),
+				Data:        err,
 				RequestId:   dara.String(requestId),
 			}
 			return _result, _err
@@ -2077,6 +2132,7 @@ func doROARequest_opResponse(response_ *dara.Response, client *Client, bodyType 
 				Code:               dara.String(code),
 				Message:            dara.String("code: " + dara.ToString(dara.IntValue(response_.StatusCode)) + ", " + dara.ToString(dara.Default(err["Message"], err["message"])) + " request id: " + requestId),
 				Description:        dara.String(dara.ToString(dara.Default(err["Description"], err["description"]))),
+				Data:               err,
 				AccessDeniedDetail: client.GetAccessDeniedDetail(err),
 				RequestId:          dara.String(requestId),
 			}
@@ -2087,6 +2143,7 @@ func doROARequest_opResponse(response_ *dara.Response, client *Client, bodyType 
 				Code:        dara.String(code),
 				Message:     dara.String("code: " + dara.ToString(dara.IntValue(response_.StatusCode)) + ", " + dara.ToString(dara.Default(err["Message"], err["message"])) + " request id: " + requestId),
 				Description: dara.String(dara.ToString(dara.Default(err["Description"], err["description"]))),
+				Data:        err,
 				RequestId:   dara.String(requestId),
 			}
 			return _result, _err
@@ -2116,13 +2173,13 @@ func doROARequest_opResponse(response_ *dara.Response, client *Client, bodyType 
 
 		return _result, _err
 	} else if dara.StringValue(bodyType) == "string" {
-		str, _err := dara.ReadAsString(response_.Body)
+		_str, _err := dara.ReadAsString(response_.Body)
 		if _err != nil {
 			return _result, _err
 		}
 
 		_err = dara.Convert(map[string]interface{}{
-			"body":       str,
+			"body":       _str,
 			"headers":    response_.Headers,
 			"statusCode": dara.IntValue(response_.StatusCode),
 		}, &_result)
@@ -2191,6 +2248,7 @@ func doROARequestWithForm_opResponse(response_ *dara.Response, client *Client, b
 				Message:     dara.String("code: " + dara.ToString(dara.IntValue(response_.StatusCode)) + ", " + dara.ToString(dara.Default(err["Message"], err["message"])) + " request id: " + requestId),
 				Description: dara.String(dara.ToString(dara.Default(err["Description"], err["description"]))),
 				RetryAfter:  openapiutil.GetThrottlingTimeLeft(response_.Headers),
+				Data:        err,
 				RequestId:   dara.String(requestId),
 			}
 			return _result, _err
@@ -2200,6 +2258,7 @@ func doROARequestWithForm_opResponse(response_ *dara.Response, client *Client, b
 				Code:               dara.String(code),
 				Message:            dara.String("code: " + dara.ToString(dara.IntValue(response_.StatusCode)) + ", " + dara.ToString(dara.Default(err["Message"], err["message"])) + " request id: " + requestId),
 				Description:        dara.String(dara.ToString(dara.Default(err["Description"], err["description"]))),
+				Data:               err,
 				AccessDeniedDetail: client.GetAccessDeniedDetail(err),
 				RequestId:          dara.String(requestId),
 			}
@@ -2210,6 +2269,7 @@ func doROARequestWithForm_opResponse(response_ *dara.Response, client *Client, b
 				Code:        dara.String(code),
 				Message:     dara.String("code: " + dara.ToString(dara.IntValue(response_.StatusCode)) + ", " + dara.ToString(dara.Default(err["Message"], err["message"])) + " request id: " + requestId),
 				Description: dara.String(dara.ToString(dara.Default(err["Description"], err["description"]))),
+				Data:        err,
 				RequestId:   dara.String(requestId),
 			}
 			return _result, _err
@@ -2239,13 +2299,13 @@ func doROARequestWithForm_opResponse(response_ *dara.Response, client *Client, b
 
 		return _result, _err
 	} else if dara.StringValue(bodyType) == "string" {
-		str, _err := dara.ReadAsString(response_.Body)
+		_str, _err := dara.ReadAsString(response_.Body)
 		if _err != nil {
 			return _result, _err
 		}
 
 		_err = dara.Convert(map[string]interface{}{
-			"body":       str,
+			"body":       _str,
 			"headers":    response_.Headers,
 			"statusCode": dara.IntValue(response_.StatusCode),
 		}, &_result)
@@ -2318,6 +2378,7 @@ func doRequest_opResponse(response_ *dara.Response, client *Client, params *open
 				Message:     dara.String("code: " + dara.ToString(dara.IntValue(response_.StatusCode)) + ", " + dara.ToString(dara.Default(err["Message"], err["message"])) + " request id: " + requestId),
 				Description: dara.String(dara.ToString(dara.Default(err["Description"], err["description"]))),
 				RetryAfter:  openapiutil.GetThrottlingTimeLeft(response_.Headers),
+				Data:        err,
 				RequestId:   dara.String(requestId),
 			}
 			return _result, _err
@@ -2327,6 +2388,7 @@ func doRequest_opResponse(response_ *dara.Response, client *Client, params *open
 				Code:               dara.String(code),
 				Message:            dara.String("code: " + dara.ToString(dara.IntValue(response_.StatusCode)) + ", " + dara.ToString(dara.Default(err["Message"], err["message"])) + " request id: " + requestId),
 				Description:        dara.String(dara.ToString(dara.Default(err["Description"], err["description"]))),
+				Data:               err,
 				AccessDeniedDetail: client.GetAccessDeniedDetail(err),
 				RequestId:          dara.String(requestId),
 			}
@@ -2337,6 +2399,7 @@ func doRequest_opResponse(response_ *dara.Response, client *Client, params *open
 				Code:        dara.String(code),
 				Message:     dara.String("code: " + dara.ToString(dara.IntValue(response_.StatusCode)) + ", " + dara.ToString(dara.Default(err["Message"], err["message"])) + " request id: " + requestId),
 				Description: dara.String(dara.ToString(dara.Default(err["Description"], err["description"]))),
+				Data:        err,
 				RequestId:   dara.String(requestId),
 			}
 			return _result, _err
@@ -2366,13 +2429,13 @@ func doRequest_opResponse(response_ *dara.Response, client *Client, params *open
 
 		return _result, _err
 	} else if dara.StringValue(params.BodyType) == "string" {
-		str, _err := dara.ReadAsString(response_.Body)
+		respStr, _err := dara.ReadAsString(response_.Body)
 		if _err != nil {
 			return _result, _err
 		}
 
 		_err = dara.Convert(map[string]interface{}{
-			"body":       str,
+			"body":       respStr,
 			"headers":    response_.Headers,
 			"statusCode": dara.IntValue(response_.StatusCode),
 		}, &_result)
